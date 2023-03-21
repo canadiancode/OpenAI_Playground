@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenAI Test</title>
+</head>
+
+<style>
+    
+* {
+    margin: 0;
+    box-sizing: border-box;
+    padding: 0;
+}
+
+div {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
+}
+
+button {
+    padding: 2em;
+}
+
+</style>
+
+<body>
+
+    <div>
+        <button class="button">Fetch data</button>
+    </div>
+
+    <script>
+
+        async function fetchOpenAI_data() {
+            try {
+
+                const endpoint = 'localhost:3000/find-complexity';
+                let data = await fetch(endpoint);
+                let response = await data.json();
+
+                console.log(await response);
+
+
+            } catch (error) {
+                console.log('Could not fetch data.. ')
+            }
+        }
+        fetchOpenAI_data();
+
+        const button = document.querySelector('.button');
+        button.addEventListener('click', fetchOpenAI_data);
+        
+    </script>
+    
+</body>
+</html>
