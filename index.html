@@ -17,11 +17,14 @@
 
 div {
     display: flex;
+    flex-direction: column;
+    gap: 1em;
     width: 100vw;
     height: 100vh;
     justify-content: center;
     align-items: center;
     margin: 0 auto;
+    padding: 0em 5%;
 }
 
 button {
@@ -34,28 +37,34 @@ button {
 
     <div>
         <button class="button">Fetch data</button>
+
+        <h1 class="heading"></h1>
+        <br>
+        <p class="desc"></p>
+        <br>
+        <p class="par"></p>
+
     </div>
 
     <script>
 
-        async function fetchOpenAI_data() {
+        async function fetchData() {
             try {
 
-                const endpoint = 'localhost:3000/find-complexity';
-                let data = await fetch(endpoint);
-                let response = await data.json();
+                // let URL = 'https://newsapi.org/v2/everything';
+                // let data = await fetch(URL)
+                // let response = await data.json();
 
-                console.log(await response);
-
+                // console.log(await response);
 
             } catch (error) {
                 console.log('Could not fetch data.. ')
             }
         }
-        fetchOpenAI_data();
+        // fetchData();
 
         const button = document.querySelector('.button');
-        button.addEventListener('click', fetchOpenAI_data);
+        button.addEventListener('click', fetchData);
         
     </script>
     
