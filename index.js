@@ -1,7 +1,7 @@
-// packages installed:
+// packages installed (npm install _______):
     // dotenv:    for keeping the API keys hidden
     // axios:     promise-based HTTPS requests using node.js
-    // puppeteer: headless browser for extracting data from news
+    // puppeteer: headless browser controlled by code
     // openai:    post prompt to OpenAI to summerize articles 
 
 // Require dotenv to import API keys and run .config to load the API keys into the index.js file 
@@ -13,13 +13,14 @@ const X_RapidAPI_KEY = process.env.X_RapidAPI_KEY;
 
 // FETCH RECENT CRYPTO NEWS ARTICLES -- FETCH RECENT CRYPTO NEWS ARTICLES -- FETCH RECENT CRYPTO NEWS ARTICLES
 
-// require axios to be used for the HTTPS request
+// require axios to be used for the HTTPS request and puppeteer for scraping data
 const axios = require("axios");
+const puppeteer = require('puppeteer');
 
 // for the API key
 const options = {
   method: 'GET',
-  url: 'https://crypto-news16.p.rapidapi.com/news/top/20',
+  url: 'https://crypto-news16.p.rapidapi.com/news/top/3',
   headers: {
     'X-RapidAPI-Key': X_RapidAPI_KEY,
     'X-RapidAPI-Host': 'crypto-news16.p.rapidapi.com'
@@ -27,11 +28,13 @@ const options = {
 };
 
 // retrieve the URL's for the top 20 trending news stories from coindesk
-let article_Title_Array = [];
 let article_URL_Array = [];
+let article_Title_Array = [];
+let article_Content_Array = [];
 
 // retrieve the URL's from Rapid API
-axios.request(options).then(function (response) {
+axios.request(options).then( 
+    async function (response) {
 
     // remove old Titles and URL's from the previous day
     article_Title_Array = [];
@@ -39,31 +42,63 @@ axios.request(options).then(function (response) {
 
     // loop through fetch data and push the URL's into an array
     response.data.forEach(data => {
-        console.log(data);
+        let title = data.title;
         let url = data.url;
-        article_URL_Array.push(url)
+        article_Title_Array.push(title);
+        article_URL_Array.push(url);
     });
 
-    // console.log(article_URL_Array);
+    for (let i = 0; i < article_URL_Array.length; i++) {
+        await scrapeArticle(article_URL_Array[i])
+    };
 
-}).catch(function (error) {
+    await testFunction();
+
+}).catch(
+    function (error) {
 	console.error(error);
     console.log('Could not fetch URL list...')
 });
 
 // SCRAPE ARTICLE CONTENT --  SCRAPE ARTICLE CONTENT -- SCRAPE ARTICLE CONTENT
 
-// const puppeteer = require('puppeteer');
+// to contain the new article for each loop
+let articleContent = [];
 
-// async function scrapeArticle(url) {
-//     const browser = await puppeteer.launch();
-//     const page = await browser.newPage();
-//     await page.goto(url);
+async function scrapeArticle(url) {
 
-// };
+    // set up the browser and navigate to URL
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.goto(url);
 
-// scrapeArticle('https://www.coindesk.com/business/2023/03/23/crypto-exchange-coinbase-shares-tumble-16-after-sec-enforcement-notice/?utm_medium=referral&utm_source=rss&utm_campaign=headlines');
+    // select all the elements with the class of .at-text
+    const paragraphElements = await page.$$('.at-text');
 
+    // array to contain article content
+    articleContent = [];
+
+    // Loop through all paragraph elements
+    for (const paragraph of paragraphElements) {
+        const textContent = await paragraph.evaluate(el => el.textContent);
+        articleContent.push(textContent);
+        // console.log(textContent);
+    };
+    let entireArticle = articleContent.join(' ');
+    article_Content_Array.push(entireArticle);
+
+    // console.log(article_URL_Array);
+    // console.log(article_Title_Array);
+    // console.log(article_Content_Array);
+
+    browser.close();
+}
+
+function testFunction() {
+    console.log(article_URL_Array);
+    console.log(article_Title_Array);
+    console.log(article_Content_Array);
+}
 
 // SUMMERIZE WITH OPENAI -- SUMMERIZE WITH OPENAI -- SUMMERIZE WITH OPENAI
 
