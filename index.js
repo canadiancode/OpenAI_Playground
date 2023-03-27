@@ -72,7 +72,7 @@ async function scrapeArticle(url) {
     const page = await browser.newPage();
     await page.goto(url);
 
-    // select all the elements with the class of .at-text
+    // select all the elements with the class of .at-text (Two Dollar Signs allows to fetch all elements, whereas one Dollar sign is the first element in the DOM)
     const paragraphElements = await page.$$('.at-text');
 
     // array to contain article content
