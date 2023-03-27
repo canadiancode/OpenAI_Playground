@@ -82,18 +82,14 @@ async function scrapeArticle(url) {
     for (const paragraph of paragraphElements) {
         const textContent = await paragraph.evaluate(el => el.textContent);
         articleContent.push(textContent);
-        // console.log(textContent);
     };
     let entireArticle = articleContent.join(' ');
     article_Content_Array.push(entireArticle);
 
-    // console.log(article_URL_Array);
-    // console.log(article_Title_Array);
-    // console.log(article_Content_Array);
-
     browser.close();
 }
 
+// this outputs the URL, title, and content of the 3 top crypto news stories for the day
 function testFunction() {
     console.log(article_URL_Array);
     console.log(article_Title_Array);
