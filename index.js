@@ -11,11 +11,80 @@ require('dotenv').config();
 const OpenAPI_Key = process.env.OPEN_AI_API_KEY;
 const X_RapidAPI_KEY = process.env.X_RapidAPI_KEY;
 
+// FUNTION TO SCRAPE ARTICLE CONTENT -- FUNTION TO SCRAPE ARTICLE CONTENT -- FUNTION TO SCRAPE ARTICLE CONTENT
+const puppeteer = require('puppeteer');
+
+// to contain the new article for each loop
+let articleContent = [];
+
+// function to scrape paragraph elements from URL
+async function scrapeArticle(url) {
+
+    // set up the browser and navigate to URL
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.goto(url);
+
+    // select all the elements with the class of .at-text (Two Dollar Signs allows to fetch all elements, whereas one Dollar sign is the first element in the DOM)
+    const paragraphElements = await page.$$('.at-text');
+
+    // array to contain article content
+    articleContent = [];
+
+    // Loop through all paragraph elements
+    for (const paragraph of paragraphElements) {
+        let textContent = await paragraph.evaluate(el => el.textContent);
+        console.log(textContent);
+        let formattedTextContent = await textContent.replace(/'/g, "");
+        console.log(formattedTextContent);
+        articleContent.push(formattedTextContent);
+    };
+    let formattedArticle = articleContent.join(' ');
+    article_Content_Array.push(formattedArticle);
+
+    browser.close();
+};
+
+// SUMMERIZE WITH OPENAI -- SUMMERIZE WITH OPENAI -- SUMMERIZE WITH OPENAI
+
+// 2 imports from the OpenAI package
+    // Configuration = object for defining things like API
+    // OpenAIApi = provides an easy interface for interacting with the OpenAI API
+const { Configuration, OpenAIApi } = require('openai');
+
+// fetch the API key for the first argument in the post request 
+const configuration = new Configuration({
+    apiKey: OpenAPI_Key,
+});
+
+// Add the fethced API to the first argument of the post request
+const openai = new OpenAIApi(configuration);
+
+// Function to request OpenAI to run prompt
+
+const testArticle = 'tests';
+
+async function runTwitterPrompt() {
+
+    const prompt = `Summarize the article below into a single tweet using appropriate hashtags:
+    ${testArticle}
+    `;
+
+    // find the different models here: https://platform.openai.com/docs/models
+    const response = await openai.createCompletion({
+        model: 'text-davinci-003',
+        prompt: prompt,
+        max_tokens: 4097,
+        temperature: 1
+    });
+    console.log(response.data.choices[0].text);
+};
+// runTwitterPrompt();
+
 // FETCH RECENT CRYPTO NEWS ARTICLES -- FETCH RECENT CRYPTO NEWS ARTICLES -- FETCH RECENT CRYPTO NEWS ARTICLES
 
 // require axios to be used for the HTTPS request and puppeteer for scraping data
 const axios = require("axios");
-const puppeteer = require('puppeteer');
 
 // for the API key
 const options = {
@@ -36,9 +105,10 @@ let article_Content_Array = [];
 axios.request(options).then( 
     async function (response) {
 
-    // remove old Titles and URL's from the previous day
-    article_Title_Array = [];
+    // remove old Titles, URL's, and Articles from the previous day
     article_URL_Array = [];
+    article_Title_Array = [];   
+    article_Content_Array = []; 
 
     // loop through fetch data and push the URL's into an array
     response.data.forEach(data => {
@@ -48,80 +118,19 @@ axios.request(options).then(
         article_URL_Array.push(url);
     });
 
+    // looping over each URL to scrape
     for (let i = 0; i < article_URL_Array.length; i++) {
-        await scrapeArticle(article_URL_Array[i])
+        await scrapeArticle(article_URL_Array[i]);
     };
 
-    await testFunction();
+    // looping over articles for OpenAI to summarize 
+    for (const article of article_Content_Array) {
+        // runTwitterPrompt(article);
+        console.log(article);
+    };
 
 }).catch(
     function (error) {
 	console.error(error);
-    console.log('Could not fetch URL list...')
+    console.log('Could not fetch URL list...');
 });
-
-// SCRAPE ARTICLE CONTENT --  SCRAPE ARTICLE CONTENT -- SCRAPE ARTICLE CONTENT
-
-// to contain the new article for each loop
-let articleContent = [];
-
-async function scrapeArticle(url) {
-
-    // set up the browser and navigate to URL
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();
-    await page.goto(url);
-
-    // select all the elements with the class of .at-text (Two Dollar Signs allows to fetch all elements, whereas one Dollar sign is the first element in the DOM)
-    const paragraphElements = await page.$$('.at-text');
-
-    // array to contain article content
-    articleContent = [];
-
-    // Loop through all paragraph elements
-    for (const paragraph of paragraphElements) {
-        const textContent = await paragraph.evaluate(el => el.textContent);
-        articleContent.push(textContent);
-    };
-    let entireArticle = articleContent.join(' ');
-    article_Content_Array.push(entireArticle);
-
-    browser.close();
-}
-
-// this outputs the URL, title, and content of the 3 top crypto news stories for the day
-function testFunction() {
-    console.log(article_URL_Array);
-    console.log(article_Title_Array);
-    console.log(article_Content_Array);
-}
-
-// SUMMERIZE WITH OPENAI -- SUMMERIZE WITH OPENAI -- SUMMERIZE WITH OPENAI
-
-// 2 imports from the OpenAI package
-    // Configuration = object for defining things like API
-    // OpenAIApi = provides an easy interface for interacting with the OpenAI API
-const { Configuration, OpenAIApi } = require('openai');
-
-// fetch the API key for the first argument in the post request 
-const configuration = new Configuration({
-    apiKey: OpenAPI_Key,
-});
-
-// Add the fethced API to the first argument of the post request
-const openai = new OpenAIApi(configuration);
-
-// Function to request OpenAI to run prompt
-const runPrompt = async () => {
-
-    const prompt = 'Tell me a joke about about a dog eating pasta';
-
-    const response = await openai.createCompletion({
-        model: 'gpt-4',
-        prompt: prompt,
-        max_tokens: 8192,
-        temperature: 1
-    });
-    console.log(response.data.choices[0].text);
-};
-// runPrompt();

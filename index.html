@@ -48,6 +48,12 @@ button {
 
     <script>
 
+        let simpleString = `What's up dawg's?`;
+        console.log(simpleString);
+
+        let formattedString = simpleString.replace(/'/g, "");
+        console.log(formattedString);
+
         async function fetchData() {
             try {
 
