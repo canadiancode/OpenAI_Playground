@@ -3,17 +3,12 @@
     // axios:              promise-based HTTPS requests using node.js
     // puppeteer:          headless browser controlled by code
     // openai:             post prompt to OpenAI to summerize articles 
-    // express:            node.js framework 
     // twitter-api-v2:     twitter API
-
+    // cron:               schedule tasks to run at specified times or intervals
 
 
 // Require dotenv to import API keys and run .config to load the API keys into the index.js file 
 require('dotenv').config();
-
-// Fetch the API key from the hidden folder
-const OpenAPI_Key = process.env.OPEN_AI_API_KEY;
-const X_RapidAPI_KEY = process.env.X_RapidAPI_KEY;
 
 // FUNTION TO SCRAPE ARTICLE CONTENT -- FUNTION TO SCRAPE ARTICLE CONTENT -- FUNTION TO SCRAPE ARTICLE CONTENT
 
@@ -56,6 +51,7 @@ async function scrapeArticle(url) {
 const { Configuration, OpenAIApi } = require('openai');
 
 // fetch the API key for the first argument in the post request 
+const OpenAPI_Key = process.env.OPEN_AI_API_KEY;
 const configuration = new Configuration({
     apiKey: OpenAPI_Key,
 });
@@ -63,11 +59,13 @@ const configuration = new Configuration({
 // Add the fethced API to the first argument of the post request
 const openai = new OpenAIApi(configuration);
 
-// Function to request OpenAI to run prompt
+// The array holding the tweets
+let tweet_Array = [];
 
+// Function to request OpenAI to run prompt
 async function runTwitterPrompt(scrapedArticle) {
 
-    const prompt = `Summarize the article below into a single tweet using adding appropriate hashtags at the end of the tweet:
+    const prompt = `Summarize the article below into a single tweet under 250 characters in length, and add appropriate hashtags at the end of the tweet:
     ${scrapedArticle}
     `;
 
@@ -75,12 +73,14 @@ async function runTwitterPrompt(scrapedArticle) {
     const response = await openai.createCompletion({
         model: 'text-davinci-003',
         prompt: prompt,
-        max_tokens: 500,
+        max_tokens: 100,
         temperature: 0
     });
-    console.log(response.data.choices[0].text);
-};
 
+    let summarizedTweet = response.data.choices[0].text;
+    let formattedTweet = summarizedTweet.trim();
+    tweet_Array.push(formattedTweet);
+};
 
 // POST ON TWITTER -- POST ON TWITTER -- POST ON TWITTER
 
@@ -92,25 +92,25 @@ const client = new TwitterApi({
     accessToken: process.env.ACCESS_TOKEN,
     accessSecret: process.env.ACCESS_SECRET,
 });
-
 const twitterClient = client.readWrite;
 
-async function tweet() {
+async function tweet(tweetContent) {
     try {
-        await twitterClient.v2.tweet('USDC has regained its status as the dominant stablecoin in DeFi as the aftershocks of its banking partner collapse subside. USDC has maintained its position despite the crisis, with USDT reaching a 22-month high in market share. #DeFi #USDC #USDT #Stablecoin #Crypto');
+        console.log('tweeting!')
+        await twitterClient.v2.tweet(`${tweetContent}`);
     } catch (error) {
         console.log(error);
     }
 };
-tweet();
 
-
-// FETCH URL, SCRAPE AND SUMMARIZE ARTICLES -- FETCH URL, SCRAPE AND SUMMARIZE ARTICLES -- FETCH URL, SCRAPE AND SUMMARIZE ARTICLES
+// APP WORKFLOW START --  APP WORKFLOW START  -- APP WORKFLOW START
 
 // require axios to be used for the HTTPS request and puppeteer for scraping data
 const axios = require("axios");
 
 // for the API key
+const X_RapidAPI_KEY = process.env.X_RapidAPI_KEY;
+
 const options = {
   method: 'GET',
   url: 'https://crypto-news16.p.rapidapi.com/news/top/3',
@@ -121,42 +121,78 @@ const options = {
   }
 };
 
-// retrieve the URL's for the top 20 trending news stories from coindesk
-let article_URL_Array = [];
-let article_Title_Array = [];
-let article_Content_Array = [];
+// running this function using CronJob
+function dailyPost() {
 
-// retrieve the URL's from Rapid API
-axios.request(options).then(
+    // retrieve the URL's for the top 20 trending news stories from coindesk
+    let article_URL_Array = [];
+    let article_Title_Array = [];
+    let article_Content_Array = [];
 
-    async function (response) {
+    // retrieve the URL's from Rapid API
+    axios.request(options).then(
 
-    // remove old Titles, URL's, and Articles from the previous day
-    article_URL_Array = [];
-    article_Title_Array = [];   
-    article_Content_Array = []; 
-
-    // loop through fetch data and push the URL's into an array
-    response.data.forEach(data => {
-        let title = data.title;
-        let url = data.url;
-        article_Title_Array.push(title);
-        article_URL_Array.push(url);
+        async function (response) {
+    
+        // remove old Titles, URL's, Articles, and Tweets from the previous day
+        article_URL_Array = [];
+        article_Title_Array = [];   
+        article_Content_Array = []; 
+        tweet_Array = [];
+    
+        // loop through fetch data and push the URL's into an array
+        response.data.forEach(data => {
+            let title = data.title;
+            let url = data.url;
+            article_Title_Array.push(title);
+            article_URL_Array.push(url);
+        });
+    
+        // looping over each URL to scrape
+        for (let i = 0; i < article_URL_Array.length; i++) {
+            await scrapeArticle(article_URL_Array[i]);
+        };
+    
+        // looping over articles for OpenAI to summarize 
+        for (const article of article_Content_Array) {
+            await runTwitterPrompt(article);
+        };
+    
+    }).then(
+    
+        async function postTweet() {
+    
+            for (const tweetPost of tweet_Array) {
+                if (tweetPost === tweet_Array[0]) {
+                    tweet(tweetPost)
+                    console.log(tweetPost)
+                } else if (tweetPost === tweet_Array[1]) {
+                    setTimeout(function() {
+                        tweet(tweetPost)
+                        console.log(tweetPost)
+                    }, 10800000) 
+                } else if (tweetPost === tweet_Array[2]) {
+                    setTimeout(function() {
+                        tweet(tweetPost)
+                        console.log(tweetPost)
+                    }, 21600000)
+                } else {
+                    console.log('No additional tweets to send out')
+                }
+            }
+        }
+    
+    ).catch(
+        function (error) {
+        console.error(error);
+        console.log('Could not tweet articles...');
     });
+};
 
-    // looping over each URL to scrape
-    for (let i = 0; i < article_URL_Array.length; i++) {
-        await scrapeArticle(article_URL_Array[i]);
-    };
+// run this function once a day (3 tweets per day)
+const CronJob = require('cron').CronJob;
 
-    // looping over articles for OpenAI to summarize 
-    for (const article of article_Content_Array) {
-        // console.log(article)
-        // runTwitterPrompt(article);
-    };
-
-}).catch(
-    function (error) {
-	console.error(error);
-    console.log('Could not fetch URL list...');
+const job = new CronJob('0 6 * * *', function() {
+    dailyPost();
 });
+job.start();

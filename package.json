@@ -24,6 +24,7 @@
     "content-type": "^1.0.5",
     "cookie": "^0.5.0",
     "cookie-signature": "^1.0.6",
+    "cron": "^2.3.0",
     "crypto-news-api": "^2.2.2",
     "cryptopanic": "^1.0.1",
     "debug": "^2.6.9",

@@ -1,3 +1,3 @@
 Things I am working on:
 
-- current issue is that when we extract the scraped data from the URL< we get apostrophe's inside the string that is getting added to the OpenAI prompt, so we need to remove all apostrophes before we add the article content into the main article_Content_Array prior to sending the articles to ChatGPT.
+- Added in the CronJob so the single dailyPost() function runs, and this single function has a setTimeout so that it delays the second and third post 3 hours and 6 hours before the code fully finishes running. The final step is to add this to Firebase so that it continues to run every day
