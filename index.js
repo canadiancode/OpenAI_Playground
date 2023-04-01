@@ -5,14 +5,15 @@
     // openai:             post prompt to OpenAI to summerize articles 
     // twitter-api-v2:     twitter API
     // cron:               schedule tasks to run at specified times or intervals
-    // firebase-tools      (use "sudo npm install -g firebase-tools") cloud server hosting platform 
+    // node-cron:          ability to use cron in node
+    // firebase-tools:     (use "sudo npm install -g firebase-tools") cloud server hosting platform 
 
 // Navigating & steps using Firebase after installing firebase-tools (see above)
-    // firebase login      ->  will open up tab to log in using gmail account
-    // mkdir twitter-bot   ->  make new directory called twitter-bot 
-    // cd twitter-bot      ->  enter the twitter-bot directory 
-    // .code               -> command that opens the current directory in VS Code
-    
+    // firebase login          ->  will open up tab to log in using gmail account
+    // mkdir twitter-bot       ->  make new directory called twitter-bot 
+    // cd twitter-bot          ->  enter the twitter-bot directory 
+    // .code                   -> command that opens the current directory in VS Code
+    // firebase-init functions -> Starts the process of creating a functions folder in firebase 
     
 
 
