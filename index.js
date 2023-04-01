@@ -5,17 +5,22 @@
     // openai:             post prompt to OpenAI to summerize articles 
     // twitter-api-v2:     twitter API
     // cron:               schedule tasks to run at specified times or intervals
+    // firebase-tools      cloud server hosting platform 
 
 
 // Require dotenv to import API keys and run .config to load the API keys into the index.js file 
 require('dotenv').config();
 
+// The arrays for holding the URL, article, and tweet 
+let article_URL_Array = [];
+let article_Title_Array = [];
+let article_Content_Array = [];
+let articleContent = [];
+let tweet_Array = [];
+
 // FUNTION TO SCRAPE ARTICLE CONTENT -- FUNTION TO SCRAPE ARTICLE CONTENT -- FUNTION TO SCRAPE ARTICLE CONTENT
 
 const puppeteer = require('puppeteer');
-
-// to contain the new article for each loop
-let articleContent = [];
 
 // function to scrape paragraph elements from URL
 async function scrapeArticle(url) {
@@ -41,6 +46,8 @@ async function scrapeArticle(url) {
     article_Content_Array.push(formattedArticle);
 
     browser.close();
+
+    console.log('scraped the site!')
 };
 
 // SUMMERIZE WITH OPENAI -- SUMMERIZE WITH OPENAI -- SUMMERIZE WITH OPENAI
@@ -59,13 +66,10 @@ const configuration = new Configuration({
 // Add the fethced API to the first argument of the post request
 const openai = new OpenAIApi(configuration);
 
-// The array holding the tweets
-let tweet_Array = [];
-
 // Function to request OpenAI to run prompt
-async function runTwitterPrompt(scrapedArticle) {
+async function summarizeArticle(scrapedArticle) {
 
-    const prompt = `Summarize the article below into a single tweet under 250 characters in length, and add appropriate hashtags at the end of the tweet:
+    const prompt = `Summarize the article below into a single tweet, and add appropriate hashtags at the end of the tweet. Make sure the entire tweet is under 200 characters in length:
     ${scrapedArticle}
     `;
 
@@ -80,6 +84,7 @@ async function runTwitterPrompt(scrapedArticle) {
     let summarizedTweet = response.data.choices[0].text;
     let formattedTweet = summarizedTweet.trim();
     tweet_Array.push(formattedTweet);
+    console.log('OpenAI made the tweet!');
 };
 
 // POST ON TWITTER -- POST ON TWITTER -- POST ON TWITTER
@@ -122,77 +127,93 @@ const options = {
 };
 
 // running this function using CronJob
-function dailyPost() {
 
-    // retrieve the URL's for the top 20 trending news stories from coindesk
-    let article_URL_Array = [];
-    let article_Title_Array = [];
-    let article_Content_Array = [];
+// retrieve the URL's from Rapid API
+axios.request(options).then(
 
-    // retrieve the URL's from Rapid API
-    axios.request(options).then(
+    async function (response) {
 
-        async function (response) {
-    
-        // remove old Titles, URL's, Articles, and Tweets from the previous day
-        article_URL_Array = [];
-        article_Title_Array = [];   
-        article_Content_Array = []; 
-        tweet_Array = [];
-    
-        // loop through fetch data and push the URL's into an array
-        response.data.forEach(data => {
-            let title = data.title;
-            let url = data.url;
-            article_Title_Array.push(title);
-            article_URL_Array.push(url);
-        });
-    
-        // looping over each URL to scrape
-        for (let i = 0; i < article_URL_Array.length; i++) {
-            await scrapeArticle(article_URL_Array[i]);
-        };
-    
-        // looping over articles for OpenAI to summarize 
-        for (const article of article_Content_Array) {
-            await runTwitterPrompt(article);
-        };
-    
-    }).then(
-    
-        async function postTweet() {
-    
-            for (const tweetPost of tweet_Array) {
-                if (tweetPost === tweet_Array[0]) {
-                    tweet(tweetPost)
-                    console.log(tweetPost)
-                } else if (tweetPost === tweet_Array[1]) {
-                    setTimeout(function() {
-                        tweet(tweetPost)
-                        console.log(tweetPost)
-                    }, 10800000) 
-                } else if (tweetPost === tweet_Array[2]) {
-                    setTimeout(function() {
-                        tweet(tweetPost)
-                        console.log(tweetPost)
-                    }, 21600000)
-                } else {
-                    console.log('No additional tweets to send out')
-                }
-            }
-        }
-    
-    ).catch(
-        function (error) {
-        console.error(error);
-        console.log('Could not tweet articles...');
+    // remove old Titles, URL's, Articles, and Tweets from the previous day
+    article_URL_Array = [];
+    article_Title_Array = [];   
+    article_Content_Array = []; 
+    tweet_Array = [];
+
+    // loop through fetch data and push the URL's into an array
+    response.data.forEach(data => {
+        let title = data.title;
+        let url = data.url;
+        article_Title_Array.push(title);
+        article_URL_Array.push(url);
     });
-};
+
+    // looping over each URL to scrape
+    for (let i = 0; i < article_URL_Array.length; i++) {
+        await scrapeArticle(article_URL_Array[i]);
+    };
+
+    // looping over articles for OpenAI to summarize 
+    for (const article of article_Content_Array) {
+        await summarizeArticle(article);
+    };
+
+
+    console.log('starting the for loop after summarizing all articles');
+    for (const tweetPost of tweet_Array) {
+        if (tweetPost === tweet_Array[0]) {
+            await tweet(tweetPost)
+            console.log(tweetPost)
+        } else if (tweetPost === tweet_Array[1]) {
+            setTimeout(await function() {
+                tweet(tweetPost)
+                console.log(tweetPost)
+            }, 300000)  // 10800000 = 3 hours
+        } else if (tweetPost === tweet_Array[2]) {
+            setTimeout(await function() {
+                tweet(tweetPost)
+                console.log(tweetPost)
+            }, 600000) // 21600000 = 6 hours
+        } else {
+            console.log('No additional tweets to send out');
+        }
+    }
+
+}).then(
+
+    // async function postTweet() {
+
+    //     console.log('Running the postTweet() function');
+
+    //     for (const tweetPost of tweet_Array) {
+    //         if (tweetPost === tweet_Array[0]) {
+    //             tweet(tweetPost)
+    //             console.log(tweetPost)
+    //         } else if (tweetPost === tweet_Array[1]) {
+    //             setTimeout(function() {
+    //                 tweet(tweetPost)
+    //                 console.log(tweetPost)
+    //             }, 300000)  // 10800000 = 3 hours
+    //         } else if (tweetPost === tweet_Array[2]) {
+    //             setTimeout(function() {
+    //                 tweet(tweetPost)
+    //                 console.log(tweetPost)
+    //             }, 600000) // 21600000 = 6 hours
+    //         } else {
+    //             console.log('No additional tweets to send out');
+    //         }
+    //     }
+    // }
+
+).catch(
+    function (error) {
+    console.error(error);
+    console.log('Could not tweet articles...');
+});
 
 // run this function once a day (3 tweets per day)
-const CronJob = require('cron').CronJob;
+// const CronJob = require('cron').CronJob;
 
-const job = new CronJob('0 6 * * *', function() {
-    dailyPost();
-});
-job.start();
+// const job = new CronJob('0 6 * * *', function() {
+//     dailyPost();
+// });
+// job.start();
