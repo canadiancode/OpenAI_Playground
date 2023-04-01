@@ -5,7 +5,8 @@
     // openai:             post prompt to OpenAI to summerize articles 
     // express:            node.js framework 
     // twitter-api-v2:     twitter API
-    // firebase-tools:     install firebase, the database holding the app code 
+
+
 
 // Require dotenv to import API keys and run .config to load the API keys into the index.js file 
 require('dotenv').config();
@@ -82,7 +83,7 @@ async function runTwitterPrompt(scrapedArticle) {
 
 
 // POST ON TWITTER -- POST ON TWITTER -- POST ON TWITTER
-const express = require('express');
+
 const { TwitterApi } = require('twitter-api-v2');
 
 const client = new TwitterApi({
@@ -92,12 +93,17 @@ const client = new TwitterApi({
     accessSecret: process.env.ACCESS_SECRET,
 });
 
-const bearer = new TwitterApi(process.env.BEARER_TOKEN);
-
 const twitterClient = client.readWrite;
-const twitterBearer = bearer.readOnly;
 
-module.exports = { twitterClient, twitterBearer };
+async function tweet() {
+    try {
+        await twitterClient.v2.tweet('USDC has regained its status as the dominant stablecoin in DeFi as the aftershocks of its banking partner collapse subside. USDC has maintained its position despite the crisis, with USDT reaching a 22-month high in market share. #DeFi #USDC #USDT #Stablecoin #Crypto');
+    } catch (error) {
+        console.log(error);
+    }
+};
+tweet();
+
 
 // FETCH URL, SCRAPE AND SUMMARIZE ARTICLES -- FETCH URL, SCRAPE AND SUMMARIZE ARTICLES -- FETCH URL, SCRAPE AND SUMMARIZE ARTICLES
 
@@ -146,7 +152,7 @@ axios.request(options).then(
     // looping over articles for OpenAI to summarize 
     for (const article of article_Content_Array) {
         // console.log(article)
-        runTwitterPrompt(article);
+        // runTwitterPrompt(article);
     };
 
 }).catch(
