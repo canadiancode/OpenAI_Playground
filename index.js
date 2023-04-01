@@ -5,7 +5,15 @@
     // openai:             post prompt to OpenAI to summerize articles 
     // twitter-api-v2:     twitter API
     // cron:               schedule tasks to run at specified times or intervals
-    // firebase-tools      cloud server hosting platform 
+    // firebase-tools      (use "sudo npm install -g firebase-tools") cloud server hosting platform 
+
+// Navigating & steps using Firebase after installing firebase-tools (see above)
+    // firebase login      ->  will open up tab to log in using gmail account
+    // mkdir twitter-bot   ->  make new directory called twitter-bot 
+    // cd twitter-bot      ->  enter the twitter-bot directory 
+    // .code               -> command that opens the current directory in VS Code
+    
+    
 
 
 // Require dotenv to import API keys and run .config to load the API keys into the index.js file 
@@ -157,7 +165,7 @@ axios.request(options).then(
         await summarizeArticle(article);
     };
 
-
+    // posting the tweets made fro OpenAI
     console.log('starting the for loop after summarizing all articles');
     for (const tweetPost of tweet_Array) {
         if (tweetPost === tweet_Array[0]) {
@@ -178,42 +186,70 @@ axios.request(options).then(
         }
     }
 
-}).then(
-
-    // async function postTweet() {
-
-    //     console.log('Running the postTweet() function');
-
-    //     for (const tweetPost of tweet_Array) {
-    //         if (tweetPost === tweet_Array[0]) {
-    //             tweet(tweetPost)
-    //             console.log(tweetPost)
-    //         } else if (tweetPost === tweet_Array[1]) {
-    //             setTimeout(function() {
-    //                 tweet(tweetPost)
-    //                 console.log(tweetPost)
-    //             }, 300000)  // 10800000 = 3 hours
-    //         } else if (tweetPost === tweet_Array[2]) {
-    //             setTimeout(function() {
-    //                 tweet(tweetPost)
-    //                 console.log(tweetPost)
-    //             }, 600000) // 21600000 = 6 hours
-    //         } else {
-    //             console.log('No additional tweets to send out');
-    //         }
-    //     }
-    // }
-
-).catch(
+}).catch(
     function (error) {
     console.error(error);
     console.log('Could not tweet articles...');
 });
 
 // run this function once a day (3 tweets per day)
-// const CronJob = require('cron').CronJob;
+const CronJob = require('cron').CronJob;
 
-// const job = new CronJob('0 6 * * *', function() {
-//     dailyPost();
-// });
-// job.start();
+const job = new CronJob('0 6 * * *', function() {
+
+    axios.request(options).then(
+
+        async function (response) {
+    
+        // remove old Titles, URL's, Articles, and Tweets from the previous day
+        article_URL_Array = [];
+        article_Title_Array = [];   
+        article_Content_Array = []; 
+        tweet_Array = [];
+    
+        // loop through fetch data and push the URL's into an array
+        response.data.forEach(data => {
+            let title = data.title;
+            let url = data.url;
+            article_Title_Array.push(title);
+            article_URL_Array.push(url);
+        });
+    
+        // looping over each URL to scrape
+        for (let i = 0; i < article_URL_Array.length; i++) {
+            await scrapeArticle(article_URL_Array[i]);
+        };
+    
+        // looping over articles for OpenAI to summarize 
+        for (const article of article_Content_Array) {
+            await summarizeArticle(article);
+        };
+    
+        // posting the tweets made fro OpenAI
+        console.log('starting the for loop after summarizing all articles');
+        for (const tweetPost of tweet_Array) {
+            if (tweetPost === tweet_Array[0]) {
+                await tweet(tweetPost)
+                console.log(tweetPost)
+            } else if (tweetPost === tweet_Array[1]) {
+                setTimeout(await function() {
+                    tweet(tweetPost)
+                    console.log(tweetPost)
+                }, 300000)  // 10800000 = 3 hours
+            } else if (tweetPost === tweet_Array[2]) {
+                setTimeout(await function() {
+                    tweet(tweetPost)
+                    console.log(tweetPost)
+                }, 600000) // 21600000 = 6 hours
+            } else {
+                console.log('No additional tweets to send out');
+            }
+        }
+    
+    }).catch(
+        function (error) {
+        console.error(error);
+        console.log('Could not tweet articles...');
+    });
+});
+job.start();
