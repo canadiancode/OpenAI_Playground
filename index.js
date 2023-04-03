@@ -4,17 +4,6 @@
     // puppeteer:          headless browser controlled by code
     // openai:             post prompt to OpenAI to summerize articles 
     // twitter-api-v2:     twitter API
-    // cron:               schedule tasks to run at specified times or intervals
-    // node-cron:          ability to use cron in node
-    // firebase-tools:     (use "sudo npm install -g firebase-tools") cloud server hosting platform 
-
-// Navigating & steps using Firebase after installing firebase-tools (see above)
-    // firebase login          ->  will open up tab to log in using gmail account
-    // mkdir twitter-bot       ->  make new directory called twitter-bot 
-    // cd twitter-bot          ->  enter the twitter-bot directory 
-    // .code                   -> command that opens the current directory in VS Code
-    // firebase-init functions -> Starts the process of creating a functions folder in firebase 
-    
 
 
 // Require dotenv to import API keys and run .config to load the API keys into the index.js file 
@@ -176,12 +165,12 @@ axios.request(options).then(
             setTimeout(await function() {
                 tweet(tweetPost)
                 console.log(tweetPost)
-            }, 300000)  // 10800000 = 3 hours // 300000 = 5 minutes
+            }, 10800000)  // 10800000 = 3 hours // 300000 = 5 minutes
         } else if (tweetPost === tweet_Array[2]) {
             setTimeout(await function() {
                 tweet(tweetPost)
                 console.log(tweetPost)
-            }, 600000) // 21600000 = 6 hours  // 600000 = 10 minutes
+            }, 21600000) // 21600000 = 6 hours  // 600000 = 10 minutes
         } else {
             console.log('No additional tweets to send out');
         }
@@ -194,63 +183,64 @@ axios.request(options).then(
 });
 
 // run this function once a day (3 tweets per day)
-const CronJob = require('cron').CronJob;
 
-const job = new CronJob('0 6 * * *', function() {
+// const CronJob = require('cron').CronJob;
 
-    axios.request(options).then(
+// const job = new CronJob('0 6 * * *', function() {
 
-        async function (response) {
+//     axios.request(options).then(
+
+//         async function (response) {
     
-        // remove old Titles, URL's, Articles, and Tweets from the previous day
-        article_URL_Array = [];
-        article_Title_Array = [];   
-        article_Content_Array = []; 
-        tweet_Array = [];
+//         // remove old Titles, URL's, Articles, and Tweets from the previous day
+//         article_URL_Array = [];
+//         article_Title_Array = [];   
+//         article_Content_Array = []; 
+//         tweet_Array = [];
     
-        // loop through fetch data and push the URL's into an array
-        response.data.forEach(data => {
-            let title = data.title;
-            let url = data.url;
-            article_Title_Array.push(title);
-            article_URL_Array.push(url);
-        });
+//         // loop through fetch data and push the URL's into an array
+//         response.data.forEach(data => {
+//             let title = data.title;
+//             let url = data.url;
+//             article_Title_Array.push(title);
+//             article_URL_Array.push(url);
+//         });
     
-        // looping over each URL to scrape
-        for (let i = 0; i < article_URL_Array.length; i++) {
-            await scrapeArticle(article_URL_Array[i]);
-        };
+//         // looping over each URL to scrape
+//         for (let i = 0; i < article_URL_Array.length; i++) {
+//             await scrapeArticle(article_URL_Array[i]);
+//         };
     
-        // looping over articles for OpenAI to summarize 
-        for (const article of article_Content_Array) {
-            await summarizeArticle(article);
-        };
+//         // looping over articles for OpenAI to summarize 
+//         for (const article of article_Content_Array) {
+//             await summarizeArticle(article);
+//         };
     
-        // posting the tweets made fro OpenAI
-        console.log('starting the for loop after summarizing all articles');
-        for (const tweetPost of tweet_Array) {
-            if (tweetPost === tweet_Array[0]) {
-                await tweet(tweetPost)
-                console.log(tweetPost)
-            } else if (tweetPost === tweet_Array[1]) {
-                setTimeout(await function() {
-                    tweet(tweetPost)
-                    console.log(tweetPost)
-                }, 300000)  // 10800000 = 3 hours
-            } else if (tweetPost === tweet_Array[2]) {
-                setTimeout(await function() {
-                    tweet(tweetPost)
-                    console.log(tweetPost)
-                }, 600000) // 21600000 = 6 hours
-            } else {
-                console.log('No additional tweets to send out');
-            }
-        }
+//         // posting the tweets made fro OpenAI
+//         console.log('starting the for loop after summarizing all articles');
+//         for (const tweetPost of tweet_Array) {
+//             if (tweetPost === tweet_Array[0]) {
+//                 await tweet(tweetPost)
+//                 console.log(tweetPost)
+//             } else if (tweetPost === tweet_Array[1]) {
+//                 setTimeout(await function() {
+//                     tweet(tweetPost)
+//                     console.log(tweetPost)
+//                 }, 300000)  // 10800000 = 3 hours
+//             } else if (tweetPost === tweet_Array[2]) {
+//                 setTimeout(await function() {
+//                     tweet(tweetPost)
+//                     console.log(tweetPost)
+//                 }, 600000) // 21600000 = 6 hours
+//             } else {
+//                 console.log('No additional tweets to send out');
+//             }
+//         }
     
-    }).catch(
-        function (error) {
-        console.error(error);
-        console.log('Could not tweet articles...');
-    });
-});
-job.start();
+//     }).catch(
+//         function (error) {
+//         console.error(error);
+//         console.log('Could not tweet articles...');
+//     });
+// });
+// job.start();
