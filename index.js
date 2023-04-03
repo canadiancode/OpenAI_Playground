@@ -78,7 +78,7 @@ const openai = new OpenAIApi(configuration);
 // Function to request OpenAI to run prompt
 async function summarizeArticle(scrapedArticle) {
 
-    const prompt = `Summarize the article below into a single tweet, and add appropriate hashtags at the end of the tweet. Make sure the entire tweet is under 200 characters in length:
+    const prompt = `Summarize the article below into a single tweet, and add appropriate hashtags at the end of the tweet. Make sure the entire tweet is under 150 characters in length:
     ${scrapedArticle}
     `;
 
@@ -176,12 +176,12 @@ axios.request(options).then(
             setTimeout(await function() {
                 tweet(tweetPost)
                 console.log(tweetPost)
-            }, 300000)  // 10800000 = 3 hours
+            }, 300000)  // 10800000 = 3 hours // 300000 = 5 minutes
         } else if (tweetPost === tweet_Array[2]) {
             setTimeout(await function() {
                 tweet(tweetPost)
                 console.log(tweetPost)
-            }, 600000) // 21600000 = 6 hours
+            }, 600000) // 21600000 = 6 hours  // 600000 = 10 minutes
         } else {
             console.log('No additional tweets to send out');
         }
